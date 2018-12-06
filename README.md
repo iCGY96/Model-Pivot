@@ -1,2 +1,4 @@
 # open-exchange
-open-exchange is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between Keras, MXNet, PyTorch, and ONNX
+
+## Acknowledgements
+Thanks to [Microsoft](https://github.com/Microsoft), the initial code of *MXNet -> IR converting* is references to his project [MMdnn](https://github.com/Microsoft/MMdnn).
