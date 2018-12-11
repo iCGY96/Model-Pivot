@@ -96,12 +96,14 @@ class MXNetRecover(Recover):
 
 
         if self.weight_loaded:
-            fullpath = os.path.abspath(self.output_weights_file)
-            dirname = os.path.dirname(fullpath)
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
-            with open(self.output_weights_file, 'wb') as outfile:
-                np.save(outfile, self.output_weights)
+            # fullpath = os.path.abspath(self.output_weights_file)
+            # dirname = os.path.dirname(fullpath)
+            # if not os.path.exists(dirname):
+            #     os.makedirs(dirname)
+            print(self.output_weights_file)
+            with open(self.output_weights_file + 'open-exchange.npy', 'wb') as outfile:
+                print("saved weight!!!")
+                np.save(outfile, self.weights)
 
 
 
