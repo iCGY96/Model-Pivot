@@ -101,7 +101,7 @@ class MXNetRecover(Recover):
             # if not os.path.exists(dirname):
             #     os.makedirs(dirname)
             print(self.output_weights_file)
-            with open(self.output_weights_file + 'open-exchange.npy', 'wb') as outfile:
+            with open(self.output_weights_file + '/open-exchange.npy', 'wb') as outfile:
                 print("saved weight!!!")
                 np.save(outfile, self.weights)
 
