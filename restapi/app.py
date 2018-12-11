@@ -75,7 +75,7 @@ def open_exchange():
                 make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
             if not os.path.exists(params['mdoel_file_path']):
                 make_response(jsonify({'error': params["mdoel_file_path"] + 'not exist'}), 401)
-            args = ('IR', params['json_file_path'], params['mdoel_file_path'], params['input_shape'], model)
+            args = (params['json_file_path'], params['mdoel_file_path'], params['input_shape'], model)
             try:
                 mxnet_model = KerasConverter(args)
                 mxnet_model.keras_to_IR()
