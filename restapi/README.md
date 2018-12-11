@@ -133,9 +133,8 @@ Configure the rest server ip and port in [config/exchange-config.yaml](../config
       "output_path": "/path/to/model",
 
       * parameters for IR *
-      "json_file_name": "The json file for structure of IR model",
-      "proto_file_name": "The proto file for structure of IR model",
-      "weights_file_name": "The weights file for structure of IR model"
+      "proto_file_path": "The proto file for structure of IR model",
+      "weights_file_path": "The weights file for structure of IR model"
     }
     ```
 

@@ -8,6 +8,7 @@ from common.keras.keras_converter import KerasConverter
 from common.mxnet.mxnet_converter import MxNetConverter
 from common.mxnet.mxnet_recover import MXNetRecover
 import common.pytorch as pt
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 app = Flask(__name__)
 
@@ -16,7 +17,7 @@ def not_found(error):
     return make_response(jsonify({'error': 'Not found, 401'}), 401)
 
 
-@app.route('/', methods=['POST'])
+@app.route('/api/v1/exchange', methods=['POST'])
 def open_exchange():
     # Check the params
     if not request.json:
@@ -73,9 +74,9 @@ def open_exchange():
         elif params["source_framwork"] == "Keras":
             if not os.path.exists(params['json_file_path']):
                 make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
-            if not os.path.exists(params['mdoel_file_path']):
-                make_response(jsonify({'error': params["mdoel_file_path"] + 'not exist'}), 401)
-            args = (params['json_file_path'], params['mdoel_file_path'], params['input_shape'], model)
+            if not os.path.exists(params['model_file_path']):
+                make_response(jsonify({'error': params["model_file_path"] + 'not exist'}), 401)
+            args = (params['json_file_path'], params['model_file_path'], model)
             try:
                 mxnet_model = KerasConverter(args)
                 mxnet_model.keras_to_IR()
@@ -112,7 +113,7 @@ def open_exchange():
     # IR (Intermediate Representation) to destination_framework
     else:
         if params["destination_framework"] == "MXNet":
-            args = (params['json_file_path'], params['params_file_path'], params['output_path'])
+            args = (params['proto_file_path'], params['params_file_path'], params['output_path'])
             try:
                 mxnet_model = MXNetRecover(args)
                 mxnet_model.IR_to_mxnet()
@@ -125,7 +126,7 @@ def open_exchange():
             }
         elif params["destination_framework"] == "PyTorch":
             try:
-                recover = pt.PytorchEmitter((params['proto_file_name'], params['params_file_path']))
+                recover = pt.PytorchEmitter((params['proto_file_path'], params['params_file_path']))
             except:
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             

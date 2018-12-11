@@ -275,6 +275,14 @@ class MXNetRecover(Recover):
         if 'bias' in self.IR_graph.get_son(IR_node.name, [0]).name and self.weight_loaded:
             self.output_weights[IR_node.name + "_bias"] = weight_dict['bias']
 
+    def recover_shift(self, IR_node):
+        pass
+
+    def recover_flatten(self, IR_node):
+        pass
+
+    def recover_Softmax(self, IR_node):
+        pass
 
     def recover_conv(self, IR_node):
         return self._recover_convolution(IR_node, "Convolution")
