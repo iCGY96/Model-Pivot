@@ -63,36 +63,36 @@ class MXNetRecover(Recover):
             node_type = current_node.type
             # print(node_type)
 
-            if len(current_node.in_edges) == 0:
-                current_node.in_edges.append('data')
+            # if len(current_node.in_edges) == 0:
+            #     current_node.in_edges.append('data')
 
-            if node_type.lower() in MXNetRecover.activation_map:
-                func = getattr(self, "recover_Activation")
-                line = func(current_node, MXNetRecover.activation_map[node_type.lower()].lower())
-                # self.add_body(1, line)
-            elif hasattr(self, "recover_" + node_type):
-                func = getattr(self, "recover_" + node_type)
-                line = func(current_node)
-                # self.add_body(1, line)
-            else:
-                print("MXNet Recover has not supported operator [%s]." % (node_type))
-                self.recover_UNKNOWN(current_node)
+            # if node_type.lower() in MXNetRecover.activation_map:
+            #     func = getattr(self, "recover_Activation")
+            #     line = func(current_node, MXNetRecover.activation_map[node_type.lower()].lower())
+            #     # self.add_body(1, line)
+            # elif hasattr(self, "recover_" + node_type):
+            #     func = getattr(self, "recover_" + node_type)
+            #     line = func(current_node)
+            #     # self.add_body(1, line)
+            # else:
+            #     print("MXNet Recover has not supported operator [%s]." % (node_type))
+            #     self.recover_UNKNOWN(current_node)
 
-            if node_type == "DataInput":
-                cur_shape = list()
-                first = True
-                for dim in current_node.IR_layer.attribute["shape"].val.shape.dim:
-                    if dim.size == -1 and first:
-                        cur_shape.append(1)
-                        print("Detect input layer [{}] using infer batch size, set it as default value [1]".format(current_node.name))
-                    else:
-                        if dim.size == -1:
-                            print("Warning: user should change input size manually")
-                        cur_shape.append(dim.size)
-                    first = False
+            # if node_type == "DataInput":
+            #     cur_shape = list()
+            #     first = True
+            #     for dim in current_node.IR_layer.attribute["shape"].val.shape.dim:
+            #         if dim.size == -1 and first:
+            #             cur_shape.append(1)
+            #             print("Detect input layer [{}] using infer batch size, set it as default value [1]".format(current_node.name))
+            #         else:
+            #             if dim.size == -1:
+            #                 print("Warning: user should change input size manually")
+            #             cur_shape.append(dim.size)
+            #         first = False
 
-                cur_shape.insert(1, cur_shape.pop())
-                shape[current_node.name] = ', '.join('%s' % i for i in cur_shape)
+            #     cur_shape.insert(1, cur_shape.pop())
+            #     shape[current_node.name] = ', '.join('%s' % i for i in cur_shape)
 
 
         if self.weight_loaded:
@@ -286,7 +286,10 @@ class MXNetRecover(Recover):
     def recover_Softmax(self, IR_node):
         pass
 
-    def recover_conv(self, IR_node):
+    def recover_null(self, IR_node):
+        pass
+
+    def recover_Conv(self, IR_node):
         return self._recover_convolution(IR_node, "Convolution")
 
 
@@ -473,7 +476,8 @@ class MXNetRecover(Recover):
         axes = ','.join('%s' % MXNetRecover.transpose_map[i] for i in axes)
 
 
-    # def recover_LRN(self, IR_node):
+    def recover_LRN(self, IR_node):
+        pass
 
     def recover_Constant(self, IR_node):
         raise NotImplementedError()
