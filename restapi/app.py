@@ -28,8 +28,8 @@ def open_exchange():
     framworks = ['MXNet', 'IR', 'Keras', 'PyTorch']
     if not params["destination_framework"] in framworks:
         make_response(jsonify({'error': params["destination_framework"] + 'not supported'}), 401)
-    if not params["source_framwork"] in framworks:
-        make_response(jsonify({'error': params["source_framwork"] + 'not supported'}), 401)
+    if not params["source_framework"] in framworks:
+        make_response(jsonify({'error': params["source_framework"] + 'not supported'}), 401)
 
     if not 'model' in params:
         model = {
@@ -47,10 +47,10 @@ def open_exchange():
         params["model"].update({'version': '0.1.0'})
         model = params["model"]
 
-    # source_framwork to IR
+    # source_framework to IR
     if params["destination_framework"] == "IR":
         params["input_shape"] = (3, 224, 224)
-        if params["source_framwork"] == "MXNet":
+        if params["source_framework"] == "MXNet":
             if not os.path.exists(params['json_file_path']):
                 make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
             if not os.path.exists(params['params_file_path']):
@@ -66,12 +66,12 @@ def open_exchange():
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
-                'response' : params["source_framwork"] + ' to ' + params["destination_framework"] + ' success!',
+                'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "json_file_name": "open-exchange.json",
                 "proto_file_name": "open-exchange.pb",
                 "weights_file_name": "open-exchange.npy"
             }
-        elif params["source_framwork"] == "Keras":
+        elif params["source_framework"] == "Keras":
             if not os.path.exists(params['json_file_path']):
                 make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
             if not os.path.exists(params['model_file_path']):
@@ -87,12 +87,12 @@ def open_exchange():
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
-                'response' : params["source_framwork"] + ' to ' + params["destination_framework"] + ' success!',
+                'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "json_file_name": "open-exchange.json",
                 "proto_file_name": "open-exchange.pb",
                 "weights_file_name": "open-exchange.npy"
             }
-        elif params["source_framwork"] == "PyTorch":
+        elif params["source_framework"] == "PyTorch":
             if not os.path.exists(params['model_file_path']):
                 make_response(jsonify({'error': params["model_file_path"] + 'not exist'}), 401)
             try:
@@ -102,13 +102,13 @@ def open_exchange():
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
-                'response' : params["source_framwork"] + ' to ' + params["destination_framework"] + ' success!',
+                'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "json_file_name": "open-exchange.json",
                 "proto_file_name": "open-exchange.pb",
                 "weights_file_name": "open-exchange.npy"
             }
         else:
-            make_response(jsonify({'error': params["source_framwork"] + 'not supported'}), 401)
+            make_response(jsonify({'error': params["source_framework"] + 'not supported'}), 401)
 
     # IR (Intermediate Representation) to destination_framework
     else:
@@ -121,7 +121,7 @@ def open_exchange():
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
-                'response' : params["source_framwork"] + ' to ' + params["destination_framework"] + ' success!',
+                'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "weights_file_name": "open-exchange.npy"
             }
         elif params["destination_framework"] == "PyTorch":
@@ -131,11 +131,11 @@ def open_exchange():
                 make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
-                'response' : params["source_framwork"] + ' to ' + params["destination_framework"] + ' success!',
+                'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "weights_file_name": "open-exchange.npy"
             }
         else:
-            make_response(jsonify({'error': params["source_framwork"] + 'not supported'}), 401)
+            make_response(jsonify({'error': params["source_framework"] + 'not supported'}), 401)
 
     return jsonify(response), 201
 
