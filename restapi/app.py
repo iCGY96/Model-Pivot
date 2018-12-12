@@ -22,7 +22,6 @@ def open_exchange():
     # Check the params
     if not request.json:
         make_response(jsonify({'error': 'Wrong Paramters'}), 401)
-
     params =  request.json
     # Check the framwork
     framworks = ['MXNet', 'IR', 'Keras', 'PyTorch']
@@ -52,9 +51,9 @@ def open_exchange():
         params["input_shape"] = (3, 224, 224)
         if params["source_framework"] == "MXNet":
             if not os.path.exists(params['json_file_path']):
-                make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
+                return make_response(jsonify({'error': params["json_file_path"] + ' not exist'}), 401)
             if not os.path.exists(params['params_file_path']):
-                make_response(jsonify({'error': params["params_file_path"] + 'not exist'}), 401)
+                return make_response(jsonify({'error': params["params_file_path"] + ' not exist'}), 401)
             args = ('IR', params['json_file_path'], params['params_file_path'], params['input_shape'], model)
             try:
                 mxnet_model = MxNetConverter(args)
@@ -63,7 +62,7 @@ def open_exchange():
                 mxnet_model.save_to_proto(params['output_path'] + "/open-exchange.pb")
                 mxnet_model.save_weights(params['output_path'] + "/open-exchange.npy")
             except:
-                make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
+                return make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
                 'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
@@ -73,9 +72,9 @@ def open_exchange():
             }
         elif params["source_framework"] == "Keras":
             if not os.path.exists(params['json_file_path']):
-                make_response(jsonify({'error': params["json_file_path"] + 'not exist'}), 401)
+                return make_response(jsonify({'error': params["json_file_path"] + ' not exist'}), 401)
             if not os.path.exists(params['model_file_path']):
-                make_response(jsonify({'error': params["model_file_path"] + 'not exist'}), 401)
+                return make_response(jsonify({'error': params["model_file_path"] + ' not exist'}), 401)
             args = (params['json_file_path'], params['model_file_path'], model)
             try:
                 mxnet_model = KerasConverter(args)
@@ -84,7 +83,7 @@ def open_exchange():
                 mxnet_model.save_to_proto(params['output_path'] + "/open-exchange.pb")
                 mxnet_model.save_weights(params['output_path'] + "/open-exchange.npy")
             except:
-                make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
+                return make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
                 'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
@@ -93,13 +92,14 @@ def open_exchange():
                 "weights_file_name": "open-exchange.npy"
             }
         elif params["source_framework"] == "PyTorch":
+            app.logger.info("I am in")
             if not os.path.exists(params['model_file_path']):
-                make_response(jsonify({'error': params["model_file_path"] + 'not exist'}), 401)
+                return make_response(jsonify({'error': params["model_file_path"] + ' not exist'}), 401)
             try:
-                parser = pt.PytorchParser(params['model_file_path'], params['input_shape'])
+                parser = pt.PytorchParser(params['model_file_path'], params["input_shape"])
                 parser.run(params['output_path'])
             except:
-                make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
+                return make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
                 'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
@@ -108,36 +108,48 @@ def open_exchange():
                 "weights_file_name": "open-exchange.npy"
             }
         else:
-            make_response(jsonify({'error': params["source_framework"] + 'not supported'}), 401)
+            make_response(jsonify({'error': params["source_framework"] + ' not supported'}), 401)
 
     # IR (Intermediate Representation) to destination_framework
     else:
         if params["destination_framework"] == "MXNet":
+            print(os.path.exists(params['params_file_path']))
+            if not os.path.exists(params['params_file_path']):
+                return make_response(jsonify({'error': params["params_file_path"] + ' not exist'}), 401)
+            if not os.path.exists(params['proto_file_path']):
+                return make_response(jsonify({'error': params["proto_file_path"] + ' not exist'}), 401)
             args = (params['proto_file_path'], params['params_file_path'], params['output_path'])
             try:
                 mxnet_model = MXNetRecover(args)
                 mxnet_model.IR_to_mxnet()
             except:
-                make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
+                return make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
                 'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "weights_file_name": "open-exchange.npy"
             }
         elif params["destination_framework"] == "PyTorch":
+            if not os.path.exists(params['params_file_path']):
+                return make_response(jsonify({'error': params["params_file_path"] + ' not exist'}), 401)
+            if not os.path.exists(params['proto_file_path']):
+                return make_response(jsonify({'error': params["proto_file_path"] + ' not exist'}), 401)
             try:
                 recover = pt.PytorchEmitter((params['proto_file_path'], params['params_file_path']))
+                file_path = os.path.join(params["output_path"],"pytorch_weights.npy")
+                recover.run(None,file_path)
             except:
-                make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
+                return make_response(jsonify({'error': 'An error occurred during the conversion!'}), 401)
             
             response = { 
                 'response' : params["source_framework"] + ' to ' + params["destination_framework"] + ' success!',
                 "weights_file_name": "open-exchange.npy"
             }
         else:
-            make_response(jsonify({'error': params["source_framework"] + 'not supported'}), 401)
+            return make_response(jsonify({'error': params["source_framework"] + ' not supported'}), 401)
 
     return jsonify(response), 201
 
 if __name__ == '__main__':
     app.run(debug=False, threaded=True, port=6023)
+    # app.run(debug=True,port=6023)

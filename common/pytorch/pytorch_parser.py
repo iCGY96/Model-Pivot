@@ -68,6 +68,8 @@ class PytorchParser(Converter):
             print("Pytorch model file [{}] is not found.".format(model_file_name))
             assert False
         # test
+        if isinstance(input_shape,tuple):
+            input_shape = list(input_shape)
 
         # cpu: https://github.com/pytorch/pytorch/issues/5286
         try:
@@ -84,6 +86,15 @@ class PytorchParser(Converter):
         self.state_dict = self.pytorch_graph.state_dict
         self.shape_dict = self.pytorch_graph.shape_dict
 
+    def run(self, dest_path):
+        self.gen_IR()
+        print("run")
+        filename = os.path.join(dest_path,"IR_from_pytorch")
+        print(dest_path)
+        print(filename)
+        self.save_to_json(filename + ".json")
+        self.save_to_proto(filename + ".pb")
+        self.save_weights(filename + ".npy")
 
     def gen_IR(self):
 

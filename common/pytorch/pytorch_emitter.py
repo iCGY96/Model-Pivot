@@ -40,8 +40,8 @@ class PytorchEmitter(Recover):
         self._load_weights(weight_path)
 
 
-    def run(self, dstNetworkPath, dstWeightPath = None, phase = 'test'):
-        super(PytorchEmitter, self).run(dstNetworkPath, dstWeightPath, phase)
+    def run(self, dstNetworkPath = None, dstWeightPath = None, phase = 'test'):
+       #super(PytorchEmitter, self).run(dstNetworkPath, dstWeightPath, phase)
         if self.weight_loaded:
             self.save_weights(self.weights_dict, dstWeightPath)
 

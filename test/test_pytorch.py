@@ -13,7 +13,7 @@ def main():
 
     #convert pytorch to IR
     IR_pth = "log/IR_pytorch"
-    parser = pt.PytorchParser(ori_save_pth, [3,224,224])
+    parser = pt.PytorchParser(ori_save_pth, (3,224,224))
     parser.run(IR_pth)
  
     #from IR generate pytorch code 
