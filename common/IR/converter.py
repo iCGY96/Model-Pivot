@@ -24,6 +24,12 @@ class Converter(object):
         self.bias_num = 0
         # self.num_node = dict()
 
+    def run(self, dest_path):
+        self.gen_IR()
+        self.save_to_json(dest_path + ".json")
+        self.save_to_proto(dest_path + ".pb")
+        self.save_weights(dest_path + ".npy")
+
 
     @property
     def src_graph(self):
@@ -47,8 +53,11 @@ class Converter(object):
 
 
     def save_to_json(self, filename):        
+        print(self.IR_model.model_name)
         import google.protobuf.json_format as json_format        
-        json_str = json_format.MessageToJson(self.IR_model, preserving_proto_field_name = True)
+        json_str = json_format.MessageToJson(self.IR_model, preserving_proto_field_name=True)
+
+        print(json_str)
         
         with open(filename, "w") as of:
             of.write(json_str)
@@ -71,9 +80,9 @@ class Converter(object):
     def save_weights(self, filename):
         if self.weight_loaded:
             import numpy as np
-            for layer_name in self.weights:
-                for name in self.weights[layer_name]:
-                    print(layer_name, name, self.weights[layer_name][name].shape)
+            # for layer_name in self.weights:
+            #     for name in self.weights[layer_name]:
+            #         print(layer_name, name, self.weights[layer_name][name].shape)
             with open(filename, 'wb') as of:
                 np.save(of, self.weights)
             print ("IR weights are saved as [{}].".format(filename))

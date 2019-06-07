@@ -1,7 +1,6 @@
 import os
 import sys
 sys.path.append('./../')
-import sys as _sys
 import google.protobuf.text_format as text_format
 from six import text_type as _text_type
 
@@ -12,7 +11,7 @@ info_model = {
     'contributor_institute': '*',
     'framework_name': 'keras',
     'framework_version': '*',
-    'model_name': '*',
+    'model_name': 'test model',
     'model_version': '0.0.1',
     'version': '0.1.0'
 }
@@ -70,15 +69,17 @@ def _convert(args):
             if inputshape is None:
                 raise ValueError("Need to provide the input node shape of Tensorflow model.")
             assert len(args.inNodeName) == len(inputshape)
-            from mmdnn.conversion.tensorflow.tensorflow_frozenparser import TensorflowParser2
-            parser = TensorflowParser2(args.weights, inputshape, args.inNodeName, args.dstNodeName)
+            # from mmdnn.conversion.tensorflow.tensorflow_frozenparser import TensorflowParser2
+            from common.tensorflow.tensorflow_frozenparser import TensorflowParser2
+            parser = TensorflowParser2(args.weights, inputshape, args.inNodeName, args.dstNodeName, info_model=info_model)
 
         else:
-            from mmdnn.conversion.tensorflow.tensorflow_parser import TensorflowParser
+            # from mmdnn.conversion.tensorflow.tensorflow_parser import TensorflowParser
+            from common.tensorflow.tensorflow_parser import TensorflowParser
             if args.inNodeName and inputshape[0]:
-                parser = TensorflowParser(args.network, args.weights, args.dstNodeName, inputshape[0], args.inNodeName)
+                parser = TensorflowParser(args.network, args.weights, args.dstNodeName, inputshape[0], args.inNodeName, info_model=info_model)
             else:
-                parser = TensorflowParser(args.network, args.weights, args.dstNodeName)
+                parser = TensorflowParser(args.network, args.weights, args.dstNodeName, info_model=info_model)
 
         parser.run(args.dstPath)
 
@@ -169,7 +170,7 @@ def _main():
     parser = _get_parser()
     args = parser.parse_args()
     ret = _convert(args)
-    _sys.exit(int(ret)) # cast to int or else the exit code is always 1
+    sys.exit(int(ret)) # cast to int or else the exit code is always 1
 
 
 if __name__ == '__main__':

@@ -94,6 +94,8 @@ class GraphClass(object):
         else:
             return self.layer_map[name]
 
+    def get_nodes(self):
+        return self.layer_map.values()
 
     def get_son(self, name, path, set_flag = False):
         if name == None: return None

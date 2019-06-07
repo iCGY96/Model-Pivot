@@ -3,12 +3,12 @@
 #  Licensed under the MIT License. See License.txt in the project root for license information.
 #----------------------------------------------------------------------------------------------
 
-from mmdnn.conversion.common.DataStructure.graph import GraphNode, Graph
+from common.IR.graph import GraphClass, NodeClass
 from tensorflow.core.framework.node_def_pb2 import NodeDef
 from tensorflow.core.framework import attr_value_pb2
 
 
-class TensorflowGraphNode(GraphNode):
+class TensorflowGraphNode(NodeClass):
 
     def __init__(self, layer):
         super(TensorflowGraphNode, self).__init__(layer)
@@ -54,7 +54,7 @@ class TensorflowGraphNode(GraphNode):
             return default_value
 
 
-class TensorflowGraph(Graph):
+class TensorflowGraph(GraphClass):
 
     multi_tensor_type = [
         "Slice",

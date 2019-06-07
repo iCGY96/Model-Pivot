@@ -141,12 +141,12 @@ const getAttr = (attr) => {
         // console.info(Object.keys(val["list"]["shape"]))
         if (Object.keys(val["list"])[0] == "shape"){
             shape = ""
-            console.info(Object.keys(val["list"]["shape"]["dim"]))
-            for (key in val["list"]["shape"]["dim"]) {
+            console.info(Object.keys(val["list"]["shape"][0]["dim"]))
+            for (key in val["list"]["shape"][0]["dim"]) {
                 if (shape == "")
-                    shape = shape + val["list"]["shape"]["dim"][key]["size"]
+                    shape = shape + val["list"]["shape"][0]["dim"][key]["size"]
                 else
-                    shape = shape + "," + val["list"]["shape"]["dim"][key]["size"]
+                    shape = shape + "," + val["list"]["shape"][0]["dim"][key]["size"]
                 // console.info(obj2str(val["list"]["shape"]["dim"]["key"]))
             }
             console.info(shape)

@@ -2,18 +2,20 @@ import numpy as np
 import tensorflow
 from tensorflow.python.framework import tensor_util
 from tensorflow.core.framework import attr_value_pb2
-from mmdnn.conversion.tensorflow.tensorflow_graph import TensorflowGraph
-import mmdnn.conversion.common.IR.graph_pb2 as graph_pb2
-from mmdnn.conversion.common.IR.graph_pb2 import NodeDef, GraphDef, DataType
-from mmdnn.conversion.common.utils import *
-from mmdnn.conversion.common.DataStructure.parser import Parser
+
+from common.tensorflow.tensorflow_graph import TensorflowGraph
+import common.IR.model_pb2 as model_pb2
+from common.IR.model_pb2 import Node, Graph, ValueType
+from common.IR.utils import *
+from common.IR.converter import Converter
+
 from distutils.version import LooseVersion
 import tempfile
 import os
 import shutil
 
 
-class TensorflowParser2(Parser):
+class TensorflowParser2(Converter):
 
     # skip_prefix = [
     #     "^",
@@ -75,16 +77,16 @@ class TensorflowParser2(Parser):
     ])
 
     dtype_map = {
-        0 : graph_pb2.DT_UNDEFINED,
-        1 : graph_pb2.DT_FLOAT32,
-        2 : graph_pb2.DT_FLOAT64,
-        3 : graph_pb2.DT_INT32,
-        4 : graph_pb2.DT_UINT8,
-        5 : graph_pb2.DT_INT16,
-        6 : graph_pb2.DT_INT8,
-        7 : graph_pb2.DT_STRING,
-        9 : graph_pb2.DT_INT64,
-        10: graph_pb2.DT_BOOL
+        0 : model_pb2.UNDEFINED,
+        1 : model_pb2.FLOAT32,
+        2 : model_pb2.FLOAT64,
+        3 : model_pb2.INT32,
+        4 : model_pb2.UINT8,
+        5 : model_pb2.INT16,
+        6 : model_pb2.INT8,
+        7 : model_pb2.STRING,
+        9 : model_pb2.INT64,
+        10: model_pb2.BOOL
     }
 
 
@@ -105,7 +107,7 @@ class TensorflowParser2(Parser):
         with open(frozen_file, 'rb') as f:
             serialized = f.read()
         tensorflow.reset_default_graph()
-        original_gdef = tensorflow.GraphDef()
+        original_gdef = tensorflow.Graph()
 
         original_gdef.ParseFromString(serialized)
 
@@ -132,7 +134,7 @@ class TensorflowParser2(Parser):
         shutil.rmtree(tempdir)
 
         tensorflow.reset_default_graph()
-        model = tensorflow.GraphDef()
+        model = tensorflow.Graph()
         model.ParseFromString(serialized)
 
         output_shape_map = dict()
