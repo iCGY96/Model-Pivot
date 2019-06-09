@@ -56,8 +56,6 @@ class Converter(object):
         print(self.IR_model.model_name)
         import google.protobuf.json_format as json_format        
         json_str = json_format.MessageToJson(self.IR_model, preserving_proto_field_name=True)
-
-        print(json_str)
         
         with open(filename, "w") as of:
             of.write(json_str)

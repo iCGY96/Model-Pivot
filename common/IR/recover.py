@@ -14,6 +14,7 @@ class Recover(object):
         self.weights_dict = dict()
         self.used_layers = set()
         self.weight_loaded = False
+        self.layers_codes = dict()
 
 
     def run(self, dstNetworkPath, dstWeightPath = None, phase = 'test'):
@@ -31,9 +32,9 @@ class Recover(object):
         import numpy as np
         self.weight_loaded = True
         try:
-            self.weights_dict = np.load(file_name).item()
+            self.weights_dict = np.load(file_name, allow_pickle=True).item()
         except:
-            self.weights_dict = np.load(file_name, encoding='bytes').item()
+            self.weights_dict = np.load(file_name, encoding='bytes', allow_pickle=True).item()
 
 
     def parent_variable_name(self, IR_node, path = [0]):

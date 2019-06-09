@@ -57,6 +57,11 @@ class IRGraphNode(NodeClass):
             attr = self.layer.attribute[name]
             field = attr.WhichOneof('value')
             val = getattr(attr, field) if field else default_value
+            try:
+                field = val.WhichOneof('value')
+                val = getattr(val, field) if field else val
+            except:
+                pass
             if isinstance(val, Attribute.ListValue):
                 return list(val.ListFields()[0][1])
             else:

@@ -5,25 +5,24 @@
 
 import os
 
-from mmdnn.conversion.common.IR.IR_graph import IRGraph, IRGraphNode
-import mmdnn.conversion.common.IR.graph_pb2 as graph_pb2
-from mmdnn.conversion.common.IR.graph_pb2 import NodeDef, GraphDef, DataType
-from mmdnn.conversion.common.DataStructure.emitter import Emitter
-from mmdnn.conversion.common.utils import *
-from mmdnn.conversion.rewriter.folder import Folder
+from common.IR.IR_graph import IRGraph, IRGraphNode
+import common.IR.model_pb2 as model_pb2
+from common.IR.recover import Recover
+from common.IR.utils import *
+from common.rewriter.folder import Folder
 
 
-class TensorflowEmitter(Emitter):
+class TensorflowEmitter(Recover):
 
     dtype_map = {
-        graph_pb2.DT_FLOAT16 : "tf.float16",
-        graph_pb2.DT_FLOAT32 : "tf.float32",
-        graph_pb2.DT_FLOAT64 : "tf.float64",
-        graph_pb2.DT_INT16 : "tf.int16",
-        graph_pb2.DT_INT32 : "tf.int32",
-        graph_pb2.DT_INT64 : "tf.int64",
-        graph_pb2.DT_UINT8 : "tf.uint8",
-        graph_pb2.DT_UINT16 : "tf.uint16"
+        model_pb2.FLOAT16 : "tf.float16",
+        model_pb2.FLOAT32 : "tf.float32",
+        model_pb2.FLOAT64 : "tf.float64",
+        model_pb2.INT16 : "tf.int16",
+        model_pb2.INT32 : "tf.int32",
+        model_pb2.INT64 : "tf.int64",
+        model_pb2.UINT8 : "tf.uint8",
+        model_pb2.UINT16 : "tf.uint16"
     }
 
 
@@ -166,8 +165,8 @@ def KitModel(weight_file = None):
 
 
     def emit_Constant(self, IR_node):
-        if 'dtype' in IR_node.layer.attr:
-            dtype_str = "{}".format(self.dtype_map[IR_node.layer.attr['dtype'].type])
+        if 'dtype' in IR_node.layer.attribute:
+            dtype_str = "{}".format(self.dtype_map[IR_node.layer.attribute['dtype'].val.v])
         else:
             dtype_str = "tf.float32"
         code = "{:<15} = tf.constant({}, dtype={}, name='{}')".format(
@@ -193,7 +192,7 @@ def KitModel(weight_file = None):
         arrlen = len(IR_node.get_attr('strides'))
         dim_str = '3d' if arrlen == 5 else ""
 
-        if IR_node.layer.attr['global_pooling'].b:
+        if IR_node.layer.attribute['global_pooling']:
             code = "{:<15} = tf.nn.{}{}({}, [1] + {}.get_shape().as_list()[1:-1] + [1], strides = [1] * {}, padding = 'VALID', name = '{}')".format(
                 IR_node.variable_name,
                 op,
@@ -255,10 +254,10 @@ def KitModel(weight_file = None):
 
     def emit_DataInput(self, IR_node):
         assert not IR_node.in_edges
-        shape_str = self._shapeToStr(IR_node.layer.attr["shape"].shape)
+        shape_str = self._shapeToStr(IR_node.layer.attribute["shape"].val.shape)
 
-        if 'dtype' in IR_node.layer.attr:
-            dtype_str = "{}, ".format(self.dtype_map[IR_node.layer.attr['dtype'].type])
+        if 'dtype' in IR_node.layer.attribute:
+            dtype_str = "{}, ".format(self.dtype_map[IR_node.layer.attribute['dtype'].val.v])
         else:
             dtype_str = "tf.float32,"
 
@@ -273,7 +272,7 @@ def KitModel(weight_file = None):
             self.add_body(1, "{:<15} = Dropout(name = '{}', dropout_rate = {})({})".format(
                 IR_node.variable_name,
                 IR_node.name,
-                1 - IR_node.IR_layer.attr["keep_prob"].f,
+                1 - IR_node.IR_layer.attribute["keep_prob"].val.f,
                 parent.real_variable_name))
         else:
             IR_node.real_name = parent.real_name
@@ -300,20 +299,20 @@ def KitModel(weight_file = None):
             code = "{:<15} = tf.layers.dense({}, {}, {}{}use_bias = {})".format(
                 IR_node.variable_name,
                 IR_node.variable_name + '_flatten',
-                IR_node.layer.attr['units'].i,
+                IR_node.layer.attribute['units'].val.i,
                 kernel_str,
                 bias_str,
-                IR_node.layer.attr['use_bias'].b)
+                IR_node.layer.attribute['use_bias'].val.b)
             return code
 
         else:
             code = "{:<15} = tf.layers.dense({}, {}, {}{}use_bias = {})".format(
                 IR_node.variable_name,
                 self.parent_variable_name(IR_node),
-                IR_node.layer.attr['units'].i,
+                IR_node.layer.attribute['units'].val.i,
                 kernel_str,
                 bias_str,
-                IR_node.layer.attr['use_bias'].b)
+                IR_node.layer.attribute['use_bias'].val.b)
             return code
 
 
@@ -344,23 +343,23 @@ def KitModel(weight_file = None):
 
 
     def emit_Const(self, IR_node):
-        if 'dtype' in IR_node.layer.attr:
-            dtype_str = "dtype={}".format(self.dtype_map[IR_node.layer.attr['dtype'].type])
+        if 'dtype' in IR_node.layer.attribute:
+            dtype_str = "dtype={}".format(self.dtype_map[IR_node.layer.attribute['dtype'].val.v])
             if 'int' in dtype_str:
                 code = "{:<15} = tf.constant({}, {}, shape=(1,))".format(
                     IR_node.variable_name,
-                    IR_node.layer.attr['value'].i,
+                    IR_node.layer.attribute['value'].val.i,
                     dtype_str)
             else:
                 code = "{:<15} = tf.constant({}, {}, shape=(1,))".format(
                     IR_node.variable_name,
-                    IR_node.layer.attr['value'].f,
+                    IR_node.layer.attribute['value'].val.f,
                     dtype_str)
         else:
             dtype_str = "dtype=tf.float32"
             code ="{:<15} = tf.constant({}, {}, shape=(1,))".format(
                 IR_node.variable_name,
-                IR_node.layer.attr['value'].f,
+                IR_node.layer.attribute['value'].val.f,
                 dtype_str)
 
         return code
@@ -494,7 +493,7 @@ def KitModel(weight_file = None):
         code = "{:<15} = tf.concat([{}], {}, name = '{}')".format(
             IR_node.variable_name,
             ', '.join(self.parent_variable_name(IR_node, [idx]) for idx in range(len(IR_node.in_edges))),
-            IR_node.layer.attr['axis'].i,
+            IR_node.layer.attribute['axis'].val.i,
             IR_node.name)
 
         return code
@@ -540,7 +539,7 @@ def KitModel(weight_file = None):
         code = "{:<15} = tf.squeeze({}, [{}], name = '{}')".format(
             IR_node.variable_name,
             self.parent_variable_name(IR_node),
-            ', '.join('%s' % axis for axis in IR_node.layer.attr['axes'].list.i),
+            ', '.join('%s' % axis for axis in IR_node.layer.attribute['axes'].list.i),
             IR_node.name)
         return code
 
@@ -580,7 +579,7 @@ def KitModel(weight_file = None):
 
     def emit_DepthwiseConv(self, IR_node):
         self.used_layers.add(IR_node.type)
-        strides_str = ', '.join('%s' % i for i in IR_node.layer.attr['strides'].list.i)
+        strides_str = ', '.join('%s' % i for i in IR_node.layer.attribute['strides'].list.i)
         input_node, padding = self._defuse_padding(IR_node)
         code = "{:<15} = depthwise_convolution({}, strides = [{}], padding = '{}', name = '{}')".format(
             IR_node.variable_name,

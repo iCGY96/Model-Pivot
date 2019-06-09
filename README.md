@@ -6,11 +6,33 @@
 -   PyTorch
 
 # Exmaples
+
 ### MXNet <-> IR
+
 ### Caffe <-> IR
+
 ### PyTorch <-> IR
-### Keras <-> IR
+
+- Convert pytorch to IR
+```
+CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s pytorch -d outname -n path/to/network -w path/to/weight/file
+```
+
+- Convert IR to pytorch
+```
+CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f pytorch -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+```
+
+### Keras -> IR
+
+- Convert keras to IR
+```
+CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s keras -d outname -n path/to/network -w /path/to/weight/file
+```
+
 ### Tensorflow <-> IR
+
+#### Convert tf to IR
 - Download resnet_v1_101 data
   ```
   $ wget http://download.tensorflow.org/models/resnet_v1_101_2016_08_28.tar.gz
@@ -21,13 +43,21 @@
   Refer the ```common/tensorflow/extractor.py``` to implement your own model extract code.
 
   ```
-  CUDA_VISIBLE_DEVICES=1 python ./common/tensorflow/extractor.py -n resnet_v1_101 -p /home/cgy/AITISA/test/tf-torch/resnet_v1_101.ckpt -o /home/cgy/AITISA/test/tf-torch/resnet_v1_101
+  CUDA_VISIBLE_DEVICES=0 python ./common/tensorflow/extractor.py -n resnet_v1_101 -p path/to/network/file -o path/to/outdir
   ```
 
 - Convert tf to IR
   ```
-  CUDA_VISIBLE_DEVICES=1 python ./scripts/convertToIR.py -s tf -d kit_imagenet -n /home/cgy/AITISA/test/tf-torch/resnet_v1_101/graph_resnet_v1_101.ckpt.ckpt.meta --dstNodeName Squeeze -w /home/cgy/AITISA/test/tf-torch/resnet_v1_101.ckpt
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s tf -d outname -n path/to/network --dstNodeName Squeeze -w path/to/weight/file
   ```
+
+#### Convert IR to tf
+
+- Convert tf to IR
+```
+CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f tf -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+```
+
 
 ## Acknowledgements
 Thanks to [Microsoft](https://github.com/Microsoft), the initial code of *MXNet -> IR converting* is references to his project [MMdnn](https://github.com/Microsoft/MMdnn).

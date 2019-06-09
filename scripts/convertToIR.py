@@ -129,10 +129,16 @@ def _get_parser():
         help='Path to the model network file of the external tool.')
 
     parser.add_argument(
-        '--dstPath', '-d', '-o',
+        '--dstPath', '-d',
         type=_text_type,
         required=True,
         help='Path to save the IR model.')
+
+    # parser.add_argument(
+    #     '--outPath', '-o',
+    #     type=_text_type,
+    #     required=True,
+    #     help='Out of Path to save the IR model.')
 
     # Tensorflow
     parser.add_argument(
