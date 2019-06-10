@@ -11,12 +11,12 @@
 
 ### MXNet <-> IR
 
-- Convert pytorch to IR
+- Convert MXNet to IR
   ```
   CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s mxnet -d outname -n path/to/network -w path/to/weight/file
   ```
 
-- Convert IR to pytorch
+- Convert IR to MXNet
   ```
   CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f mxnet -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
   ```
@@ -28,9 +28,9 @@
   CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s caffe -d outname -n path/to/network -w path/to/weight/file
   ```
 
-- Convert IR to pytorch
+- Convert IR to Caffe
   ```
-  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f mxnet -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f caffe -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
   ```
 
 ### PyTorch <-> IR
