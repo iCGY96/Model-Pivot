@@ -4,31 +4,53 @@
 -   Keras
 -   MXNet
 -   PyTorch
+-   Caffe
+-   Tensorflow
 
 # Exmaples
 
 ### MXNet <-> IR
 
+- Convert pytorch to IR
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s mxnet -d outname -n path/to/network -w path/to/weight/file
+  ```
+
+- Convert IR to pytorch
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f mxnet -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+  ```
+
 ### Caffe <-> IR
+
+- Convert caffe to IR
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s caffe -d outname -n path/to/network -w path/to/weight/file
+  ```
+
+- Convert IR to pytorch
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f mxnet -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+  ```
 
 ### PyTorch <-> IR
 
 - Convert pytorch to IR
-```
-CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s pytorch -d outname -n path/to/network -w path/to/weight/file
-```
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s pytorch -d outname -n path/to/network -w path/to/weight/file
+  ```
 
 - Convert IR to pytorch
-```
-CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f pytorch -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
-```
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f pytorch -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+  ```
 
 ### Keras -> IR
 
 - Convert keras to IR
-```
-CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s keras -d outname -n path/to/network -w /path/to/weight/file
-```
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s keras -d outname -n path/to/network -w /path/to/weight/file
+  ```
 
 ### Tensorflow <-> IR
 
@@ -54,9 +76,9 @@ CUDA_VISIBLE_DEVICES=0 python ./scripts/convertToIR.py -s keras -d outname -n pa
 #### Convert IR to tf
 
 - Convert tf to IR
-```
-CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py -f tf -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
-```
+  ```
+  CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py --phase test/train -f tf -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
+  ```
 
 
 ## Acknowledgements
