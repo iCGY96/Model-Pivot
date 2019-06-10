@@ -7,15 +7,16 @@ from six import text_type as _text_type
 
 def _convert(args):
     if args.dst == 'caffe':
-        from mmdnn.conversion.caffe.caffe_emitter import CaffeEmitter
+        from common.caffe.caffe_emitter import CaffeEmitter
         if args.IRWeightPath is None:
             emitter = CaffeEmitter(args.IRModelPath)
         else:
             assert args.dstWeightPath
             emitter = CaffeEmitter((args.IRModelPath, args.IRWeightPath))
 
+        emitter.run(args.dstModelPath, args.dstWeightPath, args.phase)
+
     elif args.dst == 'tensorflow' or args.dst == 'tf':
-        # from mmdnn.conversion.tensorflow.tensorflow_emitter import TensorflowEmitter
         from common.tensorflow.tensorflow_emitter import TensorflowEmitter
         if args.IRWeightPath is None:
             # Convert network architecture only

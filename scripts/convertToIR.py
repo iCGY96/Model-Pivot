@@ -28,7 +28,6 @@ def _convert(args):
     
     info_model['framework_name'] = args.src
     if args.src == 'caffe':
-        # CUDA_VISIBLE_DEVICES=1 python convertToIR.py -s caffe -d caffe_test -n /home/cgy/AITISA/test/caffe/resnet152/resnet152-deploy.prototxt -w /home/cgy/AITISA/test/caffe/resnet152/resnet152.caffemodel
         from common.caffe.transformer import CaffeTransformer
         transformer = CaffeTransformer(args.network, args.weights, "tensorflow", inputshape[0], phase = args.caffePhase)
         graph = transformer.transform_graph()

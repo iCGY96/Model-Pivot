@@ -13,14 +13,13 @@ import numpy as np
 import caffe
 from caffe import layers as L
 from caffe import params as P
-from mmdnn.conversion.common.IR.IR_graph import IRGraph, IRGraphNode
-import mmdnn.conversion.common.IR.graph_pb2 as graph_pb2
-from mmdnn.conversion.common.IR.graph_pb2 import NodeDef, GraphDef, DataType
-from mmdnn.conversion.common.DataStructure.emitter import Emitter
-from mmdnn.conversion.common.utils import *
+
+from common.IR.IR_graph import IRGraph, IRGraphNode
+from common.IR.recover import Recover
+from common.IR.utils import *
 
 
-class CaffeEmitter(Emitter):
+class CaffeEmitter(Recover):
 
     def __init__(self, model):
         from six import string_types as _string_types
