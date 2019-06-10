@@ -9,7 +9,7 @@ info_model = {
     'contributor_name': '*',
     'contributor_email': '*',
     'contributor_institute': '*',
-    'framework_name': 'keras',
+    'framework_name': '*',
     'framework_version': '*',
     'model_name': 'test model',
     'model_version': '0.0.1',
@@ -26,17 +26,19 @@ def _convert(args):
     else:
         inputshape = [None]
     
+    info_model['framework_name'] = args.src
     if args.src == 'caffe':
-        from mmdnn.conversion.caffe.transformer import CaffeTransformer
+        # CUDA_VISIBLE_DEVICES=1 python convertToIR.py -s caffe -d caffe_test -n /home/cgy/AITISA/test/caffe/resnet152/resnet152-deploy.prototxt -w /home/cgy/AITISA/test/caffe/resnet152/resnet152.caffemodel
+        from common.caffe.transformer import CaffeTransformer
         transformer = CaffeTransformer(args.network, args.weights, "tensorflow", inputshape[0], phase = args.caffePhase)
         graph = transformer.transform_graph()
         data = transformer.transform_data()
 
-        from mmdnn.conversion.caffe.writer import JsonFormatter, ModelSaver, PyWriter
-        JsonFormatter(graph).dump(args.dstPath + ".json")
+        from common.caffe.writer import JsonFormatter, ModelSaver, PyWriter
+        JsonFormatter(graph, info_model).dump(args.dstPath + ".json")
         print ("IR network structure is saved as [{}.json].".format(args.dstPath))
 
-        prototxt = graph.as_graph_def().SerializeToString()
+        prototxt = graph.as_model_def(info_model).SerializeToString()
         with open(args.dstPath + ".pb", 'wb') as of:
             of.write(prototxt)
         print ("IR network structure is saved as [{}.pb].".format(args.dstPath))
@@ -58,6 +60,7 @@ def _convert(args):
         mxnet_model.save_to_proto(args.dstPath + '.pb')
         mxnet_model.save_weights(args.dstPath + '.npy')
 
+        return 0
 
     elif args.src == 'tensorflow' or args.src == 'tf':
         assert args.network or args.weights
@@ -83,6 +86,8 @@ def _convert(args):
 
         parser.run(args.dstPath)
 
+        return 0
+
     elif args.src == 'mxnet':
         from common.mxnet.mxnet_converter import MxNetConverter
 
@@ -93,12 +98,17 @@ def _convert(args):
         mxnet_model.save_to_proto(args.dstPath + '.pb')
         mxnet_model.save_weights(args.dstPath + '.npy')
 
+        return 0
+
     elif args.src == 'pytorch':
         import common.pytorch as pt 
         # convert pytorch to IR
         IR_pth = args.dstPath
         parser = pt.PytorchParser(args.network, inputshape[0])
         parser.run(IR_pth)
+
+        return 0
+
     else:
         raise ValueError("Unknown framework [{}].".format(args.src))
 
@@ -163,12 +173,12 @@ def _get_parser():
         help='[Tensorflow/MXNet] Input shape of model (channel, height, width)')
 
 
-    # # Caffe
-    # parser.add_argument(
-    #     '--caffePhase',
-    #     type=_text_type,
-    #     default='TRAIN',
-    #     help='[Caffe] Convert the specific phase of caffe model.')
+    # Caffe
+    parser.add_argument(
+        '--caffePhase',
+        type=_text_type,
+        default='TRAIN',
+        help='[Caffe] Convert the specific phase of caffe model.')
 
     return parser
 

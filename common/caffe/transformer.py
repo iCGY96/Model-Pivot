@@ -1,13 +1,12 @@
 from __future__ import unicode_literals
 from google.protobuf import text_format
 import numpy as np
-from mmdnn.conversion.caffe.graph import GraphBuilder, NodeKind, LAYER_IN_TRAIN_PROTO
-from mmdnn.conversion.caffe.mapper import NodeMapper, get_handler_name
-from mmdnn.conversion.caffe.resolver import get_caffe_resolver, has_pycaffe
-from mmdnn.conversion.caffe.errors import print_stderr, ConversionError
-from mmdnn.conversion.caffe.common_graph import Graph
-from mmdnn.conversion.caffe.utils import get_lower_case, get_upper_case
-
+from common.caffe.graph import GraphBuilder, NodeKind, LAYER_IN_TRAIN_PROTO
+from common.caffe.mapper import NodeMapper, get_handler_name
+from common.caffe.resolver import get_caffe_resolver, has_pycaffe
+from common.caffe.errors import print_stderr, ConversionError
+from common.caffe.common_graph import caffe_Graph
+from common.caffe.utils import get_lower_case, get_upper_case
 
 class DataInjector(object):
     '''
@@ -71,6 +70,10 @@ class DataInjector(object):
         squeeze_indices = [1]  # Squeeze biases.
         if node.kind == NodeKind.InnerProduct:
             squeeze_indices.append(0)  # Squeeze FC.
+        if len(data)==1:
+            squeeze_indices=[0]
+        if node.kind == 'Convolution':
+            return data
         for idx in squeeze_indices:
             data[idx] = np.squeeze(data[idx])
         return data
@@ -220,7 +223,6 @@ class BatchNormScaleBiasFuser(SubNodeFuser):
     parameters: a scaling factor \gamma and a bias \beta.
     Caffe's implementation does not include these two. However, it is commonly
     replicated by adding a scaling+bias layer immidiately after the batch norm.
-
     This fuser merges the scaling+bias layer with the batch norm.
     '''
 
@@ -366,9 +368,8 @@ class CaffeTransformer(object):
             elif mapped_node:
                 ret.append(mapped_node)
 
-
         name = get_upper_case(get_lower_case(self.graph.name))
-        return Graph(name, ret)
+        return caffe_Graph(name, ret)
         #return Graph(name, [self.map_node(node) for node in self.graph.nodes])
 
     def get_handler(self, node_kind, prefix):
@@ -415,4 +416,3 @@ class CaffeTransformer(object):
             mapped_node.input.extend(['%s' % (self.layer_name_map[input.name]) for input, idx in node.parents])
             mapped_node.output.extend(node.output)
             return mapped_node
-

@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 import numpy as np
 
-from mmdnn.conversion.caffe.errors import ConversionError
-from mmdnn.conversion.caffe.common_graph import Node
-from mmdnn.conversion.caffe.network import DEFAULT_PADDING
-from mmdnn.conversion.caffe.utils import get_lower_case
-from mmdnn.conversion.common.IR.graph_pb2 import TensorShape
+from common.caffe.errors import ConversionError
+from common.caffe.common_graph import caffe_Node
+from common.caffe.network import DEFAULT_PADDING
+from common.caffe.utils import get_lower_case
+from common.IR.model_pb2 import TensorShape
 
 
 def get_handler_name(node_kind):
@@ -47,7 +47,7 @@ class NodeMapper(object):
             kwargs['pads'] = [0] * 8
 
         else:
-            from mmdnn.conversion.caffe.graph import NodeKind
+            from common.caffe.graph import NodeKind
             if node.kind == NodeKind.Pooling:
                 kwargs['kernel_shape'] = [1, node.kernel_parameters.k_h, node.kernel_parameters.k_w, 1]
             elif node.kind in [NodeKind.Convolution, NodeKind.Deconvolution]:
@@ -91,7 +91,7 @@ class NodeMapper(object):
 
         kwargs = {'shape': shape} # Ignore the dimension of batch size
         cls._convert_output_shape(kwargs, node)
-        return Node.create('DataInput', **kwargs)
+        return caffe_Node.create('DataInput', **kwargs)
 
 
     @classmethod
@@ -109,7 +109,7 @@ class NodeMapper(object):
             if dilation != 1:
                 kwargs['dilations'] = [1, dilation, dilation, 1]
         kwargs['group'] = node.parameters.group
-        return Node.create('Conv', **kwargs)
+        return caffe_Node.create('Conv', **kwargs)
 
 
     @classmethod
@@ -124,7 +124,7 @@ class NodeMapper(object):
             if dilation != 1:
                 kwargs['dilations'] = [1, dilation, dilation, 1]
         kwargs['group'] = node.parameters.group
-        return Node.create('ConvTranspose', **kwargs)
+        return caffe_Node.create('ConvTranspose', **kwargs)
 
 
     @classmethod
@@ -138,14 +138,14 @@ class NodeMapper(object):
             else:
                 kwargs['border'] = [offset[0], offset[1], 0, 0]
 
-        return Node.create('Crop', **kwargs)
+        return caffe_Node.create('Crop', **kwargs)
 
 
     @classmethod
     def map_relu(cls, node):
         kwargs = {}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Relu', **kwargs)
+        return caffe_Node.create('Relu', **kwargs)
 
     @classmethod
     def map_p_re_lu(cls, node):
@@ -157,7 +157,7 @@ class NodeMapper(object):
         except ConversionError:
             kwargs = {'gamma' : 0.25}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('PRelu', **kwargs)
+        return caffe_Node.create('PRelu', **kwargs)
 
 
     @classmethod
@@ -172,7 +172,7 @@ class NodeMapper(object):
             # Stochastic pooling, for instance.
             raise ConversionError('Unsupported pooling type.')
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Pool', **kwargs)
+        return caffe_Node.create('Pool', **kwargs)
 
 
     @classmethod
@@ -186,7 +186,7 @@ class NodeMapper(object):
         for i in node.output_shape[1:]:
             dim.size *= i
         kwargs = {'_output_shapes' : [shape]}
-        return Node.create('Flatten', **kwargs)
+        return caffe_Node.create('Flatten', **kwargs)
 
     @classmethod
     def map_inner_product(cls, node):
@@ -209,14 +209,14 @@ class NodeMapper(object):
 
         # if parent.output_shape.height > 1 or parent.output_shape.width > 1:
         ret.append(cls._add_flatten_layer(parent))
-        ret.append(Node.create('FullyConnected', **kwargs))
+        ret.append(caffe_Node.create('FullyConnected', **kwargs))
         return ret
 
     @classmethod
     def map_softmax(cls, node):
         kwargs = {}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Softmax', **kwargs)
+        return caffe_Node.create('Softmax', **kwargs)
 
     @classmethod
     def map_lrn(cls, node):
@@ -224,19 +224,19 @@ class NodeMapper(object):
         assert params.local_size % 2 == 1
         kwargs = {'size': int((params.local_size + 1) / 2), 'alpha': params.alpha, 'beta': params.beta, 'k' : params.k}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('LRN', **kwargs)
+        return caffe_Node.create('LRN', **kwargs)
 
     @classmethod
     def map_concat(cls, node):
         kwargs = {'axis': (2, 3, 1, 0)[node.parameters.axis]}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Concat', **kwargs)
+        return caffe_Node.create('Concat', **kwargs)
 
     @classmethod
     def map_dropout(cls, node):
         kwargs = {'keep_prob': node.parameters.dropout_ratio}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Dropout', **kwargs)
+        return caffe_Node.create('Dropout', **kwargs)
 
     @classmethod
     def map_batch_norm(cls, node):
@@ -244,7 +244,7 @@ class NodeMapper(object):
         epsilon = node.parameters.eps
         kwargs['epsilon'] = epsilon
         cls._convert_output_shape(kwargs, node)
-        return Node.create('BatchNorm', **kwargs)
+        return caffe_Node.create('BatchNorm', **kwargs)
 
     @classmethod
     def map_scale(cls, node):
@@ -253,7 +253,7 @@ class NodeMapper(object):
         # Also, mean should be set to 0, and var to 1, just to be safe.
         scale_value = float(node.parameters.filler.value)
         kwargs = {'scale' : True, 'bias' : False, 'gamma' : scale_value, 'epsilon': 0}
-        return Node.create('BatchNorm', **kwargs)
+        return caffe_Node.create('BatchNorm', **kwargs)
 
     @classmethod
     def map_eltwise(cls, node):
@@ -262,27 +262,27 @@ class NodeMapper(object):
         try:
             kwargs = {}
             cls._convert_output_shape(kwargs, node)
-            return Node.create(operations[op_code], **kwargs)
+            return caffe_Node.create(operations[op_code], **kwargs)
         except KeyError:
             raise ConversionError('Unknown elementwise operation: {}'.format(op_code))
 
     @classmethod
     def map_abs_val(cls, node):
-        return Node.create('Abs')
+        return caffe_Node.create('Abs')
 
     @classmethod
     def map_tanh(cls, node):
-        return Node.create('Tanh')
+        return caffe_Node.create('Tanh')
 
     @classmethod
     def map_sigmoid(cls, node):
-        return Node.create('Sigmoid')
+        return caffe_Node.create('Sigmoid')
 
     @classmethod
     def map_reshape(cls, node):
         kwargs = {'shape' : [dim for dim in node.output_shape]}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('Reshape', **kwargs)
+        return caffe_Node.create('Reshape', **kwargs)
 
     @classmethod
     def map_flatten(cls, node):
@@ -297,4 +297,4 @@ class NodeMapper(object):
     def map_elu(cls, node):
         kwargs = {}
         cls._convert_output_shape(kwargs, node)
-        return Node.create('ELU', **kwargs)
+        return caffe_Node.create('ELU', **kwargs)

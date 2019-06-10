@@ -1,27 +1,24 @@
-#----------------------------------------------------------------------------------------------
-#  Copyright (c) Microsoft Corporation. All rights reserved.
-#  Licensed under the MIT License. See License.txt in the project root for license information.
-#----------------------------------------------------------------------------------------------
-
 import six
 from six import string_types as _string_types
-from mmdnn.conversion.caffe.errors import ConversionError
-from mmdnn.conversion.common.IR.graph_pb2 import GraphDef, NodeDef, TensorShape
-from mmdnn.conversion.caffe.utils import get_real_name
+
+from common.caffe.errors import ConversionError
+from common.IR.model_pb2 import Model, Graph, Node, TensorShape
+from common.caffe.utils import get_real_name
+
 
 
 def assign_attr_value(attr, val):
     '''Assign value to AttrValue proto according to data type.'''
     if isinstance(val, bool):
-        attr.b = val
+        attr.val.b = val
     elif isinstance(val, six.integer_types):
-        attr.i = val
+        attr.val.i = val
     elif isinstance(val, float):
-        attr.f = val
+        attr.val.f = val
     elif isinstance(val, str):
-        attr.s = val.encode('utf-8')
+        attr.val.s = val.encode('utf-8')
     elif isinstance(val, TensorShape):
-        attr.shape.MergeFromString(val.SerializeToString())
+        attr.val.shape.MergeFromString(val.SerializeToString())
     elif isinstance(val, list):
         if len(val) == 0: return
 
@@ -42,25 +39,25 @@ def fetch_attr_value(attr):
     return val.decode('utf-8') if isinstance(val, bytes) else val
 
 
-class Node(object):
+class caffe_Node(object):
     '''An intermediate representation for DL operations.'''
 
     def __init__(self, node_pb2):
-        assert isinstance(node_pb2, NodeDef)
+        assert isinstance(node_pb2, Node)
         self.node_pb2 = node_pb2
         self.output = []
 
     @staticmethod
     def create(op, **kwargs):
-        node_pb2 = NodeDef()
-        node_pb2.op = op
+        node_pb2 = Node()
+        node_pb2.operator = op
         for k, v in kwargs.items():
-            assign_attr_value(node_pb2.attr[k], v)
-        return Node(node_pb2)
+            assign_attr_value(node_pb2.attribute[k], v)
+        return caffe_Node(node_pb2)
 
     @property
     def op(self):
-        return self.node_pb2.op
+        return self.node_pb2.operator
 
     @property
     def name(self):
@@ -77,20 +74,21 @@ class Node(object):
 
     @property
     def attr(self):
-        return self.node_pb2.attr.items()
+        return self.node_pb2.attribute.items()
 
 
-class Graph(object):
+class caffe_Graph(object):
     '''An intermediate representation for DL graph.'''
 
     def __init__(self, name, node_list, version=0):
         if node_list and len(node_list):
-            assert isinstance(node_list[0], Node)
+            assert isinstance(node_list[0], caffe_Node)
             self.node_dict = {node.name: node for node in node_list}
         else:
             self.node_dict = {}
         self.name = name
         self.version = version
+        self.model_pb = Model()
 
     def topologically_sorted(self):
         visited = set()
@@ -125,7 +123,21 @@ class Graph(object):
         return input_nodes
 
     def as_graph_def(self):
-        graph_pb2 = GraphDef()
-        graph_pb2.version = self.version
+        graph_pb2 = self.model_pb.graph
+        # graph_pb2.version = self.version
         graph_pb2.node.extend([node.node_pb2 for node in self.node_dict.values()])
         return graph_pb2
+
+    def as_model_def(self, info_model):
+        self.model_pb.version = str(self.version)
+        self.model_pb.doc_url = info_model['doc_url']
+        self.model_pb.framework_name = info_model['framework_name']
+        self.model_pb.framework_version = info_model['framework_version']
+        self.model_pb.model_name = info_model['model_name']
+        self.model_pb.model_version = info_model['model_version']
+        # Contributors
+        self.model_pb.contributors.name.append(info_model['contributor_name'])
+        self.model_pb.contributors.email.append(info_model['contributor_email'])
+        self.model_pb.contributors.institute.append(info_model['contributor_institute'])
+
+        return self.model_pb

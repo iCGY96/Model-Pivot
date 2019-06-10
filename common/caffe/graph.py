@@ -6,10 +6,10 @@ import numbers
 import os
 import tempfile
 
-from mmdnn.conversion.caffe.mapper import get_handler_name
-from mmdnn.conversion.caffe.resolver import get_caffe_resolver, has_pycaffe
-from mmdnn.conversion.caffe.shape import *
-from mmdnn.conversion.caffe.errors import print_stderr, ConversionError
+from common.caffe.mapper import get_handler_name
+from common.caffe.resolver import get_caffe_resolver, has_pycaffe
+from common.caffe.shape import *
+from common.caffe.errors import print_stderr, ConversionError
 
 
 layer_num_to_name = {

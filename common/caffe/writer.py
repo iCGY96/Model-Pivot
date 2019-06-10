@@ -6,19 +6,20 @@ import numpy as np
 import os
 import sys
 
-from mmdnn.conversion.caffe.errors import ConversionError
-from mmdnn.conversion.caffe.common_graph import fetch_attr_value
-from mmdnn.conversion.caffe.utils import get_lower_case, get_upper_case, get_real_name
+from common.caffe.errors import ConversionError
+from common.caffe.common_graph import fetch_attr_value
+from common.caffe.utils import get_lower_case, get_upper_case, get_real_name
 
 
 class JsonFormatter(object):
     '''Dumpt a DL graph into a Json file.'''
 
-    def __init__(self, graph):
+    def __init__(self, graph, info_model):
         self.graph_def = graph.as_graph_def()
+        self.model_def = graph.as_model_def(info_model)
 
     def dump(self, json_path):
-        json_txt = json_format.MessageToJson(self.graph_def)
+        json_txt = json_format.MessageToJson(self.model_def)
         parsed = json.loads(json_txt)
         formatted = json.dumps(parsed, indent=4, sort_keys=True)
         with open(json_path, 'w') as f:
