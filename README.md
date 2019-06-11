@@ -109,6 +109,6 @@ cd scripts/
   CUDA_VISIBLE_DEVICES=0 python ./scripts/IRtoModel.py --phase test/train -f tf -d path/to/save/the/destination/model -n path/to/IR/network/structure/file -w path/to/IR/weight/file
   ```
 
-<!-- 
+
 ## Acknowledgements
-Thanks to [Microsoft](https://github.com/Microsoft), the initial code of *MXNet -> IR converting* is references to his project [MMdnn](https://github.com/Microsoft/MMdnn). -->
+Thanks to [Microsoft](https://github.com/Microsoft), the initial code of *MXNet -> IR converting* is references to his project [MMdnn](https://github.com/Microsoft/MMdnn).
