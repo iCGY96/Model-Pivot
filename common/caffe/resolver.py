@@ -15,7 +15,7 @@ class CaffeResolver(object):
             self.caffe = caffe
         except ImportError:
             # Fall back to the protobuf implementation
-            from mmdnn.conversion.caffe import caffe_pb2
+            from common.caffe import caffe_pb2
             self.caffepb = caffe_pb2
             show_fallback_warning()
         if self.caffe:
