@@ -1,2 +1,2 @@
-tensorflow-gpu==1.13.0
+tensorflow-gpu==1.15.0
 numpy
