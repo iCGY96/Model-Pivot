@@ -3,11 +3,11 @@
 open-exchange is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between Keras, MXNet, PyTorch, Caffe and Tensorflow.
 
 ## Requirments
-- tensorflow==1.13.0
-- pycaffe
+- tensorflow==1.13.1
+- onnx==1.6.0
 - keras==2.4.1
-- pytorch==0.4.1
-- mxnet==1.0.0
+- pytorch==1.3.1
+- mxnet==1.5.1
 - protobuf==3.6.1
 
 ## How to deploy visualization on Web
