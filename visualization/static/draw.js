@@ -38,8 +38,8 @@ getDag = (layers, mode, margin) => {
     g.setGraph({ranksep:20, marginx:margin, marginy:margin, rankdir:rankBT?'BT':'TB'});
     g.setDefaultEdgeLabel(() => { return {}; });
     layers.forEach(layer => {
-        label = mode == "IR" ? `${layer.name}|${layer.operator}` : `${layer.name}:${layer.class_name}`
-        g.setNode(layer.name, { label: label, width: label.split('/').pop().length * 8, height: nodeH })
+        label = mode == "IR" ? `${layer.name}|${layer.op}` : `${layer.name}:${layer.class_name}`
+        g.setNode(layer.name, { label: label, width: label.split('/').pop().length * 10, height: nodeH })
         //IR model or keras model
         if (mode == "IR" && layer.input) {
             layer.input.forEach(input => {
@@ -93,7 +93,7 @@ const selectLayer = (layer, info, mode) => {
     name = layer.label.split("|")[0]
     layerInfo = info.filter(i => i.name == name)[0]
     if (mode == "IR") {
-        config = layerInfo.attribute
+        config = layerInfo.attr
         name = layerInfo.name
         // operator = layerInfo.operator
     } else if (mode == "keras") {
@@ -115,29 +115,7 @@ const selectLayer = (layer, info, mode) => {
 
 // parser attr
 const getAttr = (attr) => {
-    if (Object.keys(val)[0] == "val"){
-        // console.info(Object.keys(val["val"])[0])
-        if (Object.keys(val["val"])[0] == "shape"){
-            shape = ""
-            console.info(Object.keys(val["val"]["shape"]["dim"]))
-            for (key in val["val"]["shape"]["dim"]) {
-                if (shape == "")
-                    shape = shape + val["val"]["shape"]["dim"][key]["size"]
-                else
-                    shape = shape + "," + val["val"]["shape"]["dim"][key]["size"]
-                // console.info(obj2str(val["val"]["shape"]["dim"]["key"]))
-            }
-            console.info(shape)
-            return shape
-        }
-        else if (Object.keys(val["val"])[0] == "tensor"){
-            return "tensor"
-        }
-        else {
-            return val["val"][Object.keys(val["val"])[0]]
-        }
-    }
-    else if (Object.keys(val)[0] == "list"){
+    if (Object.keys(val)[0] == "list"){
         // console.info(Object.keys(val["list"]["shape"]))
         if (Object.keys(val["list"])[0] == "shape"){
             shape = ""
@@ -160,6 +138,29 @@ const getAttr = (attr) => {
         }
         // console.info(Object.keys(val["val"]))
     }
+    else {
+        // console.info(Object.keys(val["val"])[0])
+        // Object.keys(val["val"])[0] == "shape"
+        if (Object.keys(val)[0] == "shape"){
+            shape = ""
+            console.info(Object.keys(val["shape"]["dim"]))
+            for (key in val["shape"]["dim"]) {
+                if (shape == "")
+                    shape = shape + val["shape"]["dim"][key]["size"]
+                else
+                    shape = shape + "," + val["shape"]["dim"][key]["size"]
+                // console.info(obj2str(val["val"]["shape"]["dim"]["key"]))
+            }
+            console.info(shape)
+            return shape
+        }
+        else if (Object.keys(val)[0] == "tensor"){
+            return "tensor"
+        }
+        else {
+            return val[Object.keys(val)[0]]
+        }
+    }
 }
 
 // get layer attr
@@ -167,7 +168,7 @@ const layerAttr = (layer, info, mode) => {
     name = layer.label.split("|")[0]
     layerInfo = info.filter(i => i.name == name)[0]
     if (mode == "IR") {
-        config = layerInfo.attribute
+        config = layerInfo.attr
     } else if (mode == "keras") {
         config = layerInfo.config
     }
@@ -233,10 +234,10 @@ const draw = (json) => {
     .attr("class","chat-widget-right")  
     .style("opacity",0.0); 
 
-    // tooltip.html(getInfoModel(json))  
-    // .style("left", (window.innerWidth * 0.9))  
-    // .style("top", (nodeH))  
-    // .style("opacity",1.0); 
+    tooltip.html(getInfoModel(json))  
+    .style("left", (window.innerWidth * 0.9))  
+    .style("top", (nodeH))  
+    .style("opacity",1.0); 
     document.getElementById('info-model').innerHTML = getInfoModel(json)
 
     let mode;
@@ -258,7 +259,7 @@ const draw = (json) => {
     let scale = 1
     let x_shift = 0
     let y_shift = 0
-    let svg_w = Math.max(width, window.innerWidth * 0.8)
+    let svg_w = Math.max(width, window.innerWidth * 0.9)
     let svg_h = Math.max(height * 0.1, (window.innerHeight - 85))
 
     let svg = d3.select('#draw')
