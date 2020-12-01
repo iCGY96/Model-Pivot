@@ -24,7 +24,8 @@ class GraphNode(object):
     def real_variable_name(self):
         return self.real_name.replace('/', '_').replace('-', '_').replace('[','_').replace(']','_')
 
-
+    def __str__(self):
+        return self.real_variable_name
 
 class Graph(object):
 
@@ -37,6 +38,12 @@ class Graph(object):
         self.topological_sort = list()
         self.model = model
 
+    def __str__(self):
+        ret = ""
+        for name, layer in self.layer_map.items():
+            ret += ("name: %s\n    layer: %s\n   in_edges: %s\n    out_edges: %s\n"
+                   % (name, layer, layer.in_edges, layer.out_edges))
+        return ret
 
     def build(self):
         self._make_input_layers()
@@ -54,7 +61,7 @@ class Graph(object):
             layer.left_in_edges = len(layer.in_edges)
             if len(layer.in_edges) == 0:
                 if rebuild:
-                    if not layer.get_attr('scope'):
+                    if not getattr(layer, 'scope', None):
                         self.input_layers.append(name)
                 else:
                     self.input_layers.append(name)
@@ -163,3 +170,7 @@ class Graph(object):
             if in_node_name == in_edge.split(':')[0]:
                 count += 1
         return count
+
+    def remove_node(self, node):
+        del self.layer_name_map[node.name]
+        

@@ -32,10 +32,12 @@ class Parser(object):
 
 
     def run(self, dest_path):
-        self.gen_IR()
+        op_sets = self.gen_IR()
         self.save_to_json(dest_path + ".json")
         self.save_to_proto(dest_path + ".pb")
         self.save_weights(dest_path + ".npy")
+
+        return op_sets
     
     def _add_model_info(self, model=info_model):
         self.IR_model.doc_url = model['doc_url']

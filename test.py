@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 
 # Test for Torch
 def torch(test_models, model_path, img_path):
-    results_o, results_d = {}, {}
+    results_o, results_d, op_sets = dict(), dict(), dict()
 
     from PIL import Image
     import torch
@@ -24,7 +24,7 @@ def torch(test_models, model_path, img_path):
 
         image = Image.open(img_path)
         transformation = transforms.Compose([
-            transforms.RandomResizedCrop(image_size),
+            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
@@ -47,10 +47,14 @@ def torch(test_models, model_path, img_path):
         elif 'fcn' in model:
             from models.torch import fcn
             model_eval = fcn.FCNs()
+        elif 'lstm' in model:
+            from models.torch import lstm
+            model_eval = lstm.Lstm()
 
         model_eval.eval()
         predict = model_eval(x).data.numpy()
         preds = np.squeeze(predict)
+
         print('\033[1;31;40m')
         print(' Result of', model, ': ', np.argmax(preds))
         print('\033[0m')
@@ -60,7 +64,8 @@ def torch(test_models, model_path, img_path):
         # convert
         IR_filename = os.path.join(model_path, 'IR', model+'_torch')
         parser = PytorchParser(arch_filename, inputshape)
-        parser.run(IR_filename)
+        ops = parser.run(IR_filename)
+        op_sets[model] = ops
     del parser
     del PytorchParser
 
@@ -73,7 +78,7 @@ def torch(test_models, model_path, img_path):
 
         image = Image.open(img_path)
         transformation = transforms.Compose([
-            transforms.RandomResizedCrop(image_size),
+            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
@@ -98,16 +103,16 @@ def torch(test_models, model_path, img_path):
         print('\033[1;31;40m')
         print(' Result of ', model+'_ox : ', np.argmax(preds))
         print('\033[0m')
-        results_d[model] = np.mean(results_o[model] - preds)
+        results_d[model] = np.mean(np.power(results_o[model] - preds, 2))
     del emitter
     del PytorchEmitter
 
-    return results_d
+    return results_d, op_sets
 
 
 # Test for Tensorflow
 def tensorflow(test_models, model_path, img_path):
-    results_o, results_d = {}, {}
+    results_o, results_d, op_sets = dict(), dict(), dict()
 
     import tensorflow as tf
     from PIL import Image
@@ -141,10 +146,17 @@ def tensorflow(test_models, model_path, img_path):
             x = np.expand_dims(img, axis=0)
             from models.tf import fcn
             preds = fcn.test(x, model_path)
-        
+        elif 'lstm' in model:
+            img = np.array(image.resize((224, 224), Image.ANTIALIAS))
+            x = np.expand_dims(img, axis=0)
+            from models.tf import lstm
+            preds = lstm.test(x, model_path)
+
         print('\033[1;31;40m')
         print(' Result of', model, ': ', np.argmax(preds))
         print('\033[0m')
+        preds = np.squeeze(preds)
+        if 'fcn' in model: preds = np.array(preds).astype(np.int32)
         results_o[model] = preds
 
         import tensorflow.contrib.keras as keras
@@ -153,7 +165,8 @@ def tensorflow(test_models, model_path, img_path):
         # parser
         IR_filename = os.path.join(model_path, 'IR', model+'_tf')
         parser = TensorflowParser(arch_filename, weight_filename, ["OX_output"])
-        parser.run(IR_filename)
+        ops = parser.run(IR_filename)
+        op_sets[model] = ops
     del parser
     del TensorflowParser
 
@@ -175,6 +188,8 @@ def tensorflow(test_models, model_path, img_path):
             img = image.resize((224, 224), Image.ANTIALIAS)
         img = np.array(img)
         x = np.expand_dims(img, axis=0)
+        if 'lstm' in model:
+            x = np.reshape(x, (-1, 224 * 224 * 3))
 
         model_converted = imp.load_source('TFModel', converted_file + '.py').KitModel(weight_filename)
 
@@ -187,26 +202,26 @@ def tensorflow(test_models, model_path, img_path):
         del model_converted
         del sys.modules['TFModel']
         preds = np.squeeze(predict)
+        if 'fcn' in model: preds = np.array(preds).astype(np.int32)
 
         print('\033[1;31;40m')
         print(' Result of ', model+'_ox : ', np.argmax(preds))
         print('\033[0m')
-        results_d[model] = np.mean(results_o[model] - preds)
+        results_d[model] = np.mean(np.power(results_o[model] - preds, 2))
 
     del emitter
     del TensorflowEmitter
 
-    return np.array(results_d)
+    return results_d, op_sets
 
 def mk_dirs(path):
     if not os.path.exists(path):
-        os.mkdirs(path)
+        os.makedirs(path)
         return True
     return False
 
 if __name__=='__main__':
-    # ['resnet50', 'inception_v3', 'shufflenet', 'fcn']
-    test_models = ['resnet50', 'inception_v3', 'shufflenet', 'fcn']
+    test_models = ['resnet50', 'inception_v3', 'shufflenet', 'fcn', 'lstm']
     model_path = './../models'
     img_path = os.path.join('./', 'elephant.jpg')
 
@@ -215,8 +230,12 @@ if __name__=='__main__':
     mk_dirs(os.path.join(model_path, 'tensorflow'))
     mk_dirs(os.path.join(model_path, 'PyTorch'))
 
-    r_tf_d = tensorflow(test_models, model_path, img_path)
-    r_torch_d = torch(test_models, model_path, img_path)
+    tf_err, tf_op_sets = tensorflow(test_models, model_path, img_path)
+    torch_err, torch_op_sets = torch(test_models, model_path, img_path)
 
-    print('tf error: \n', r_tf_d)
-    print('torch error: \n', r_torch_d)
+    for model in test_models:
+        print('Model: {}'.format(model))
+        print('- Error: tf ({}) | torch ({})'.format(tf_err[model], torch_err[model]))
+        print('- TF Ops: {}'.format(tf_op_sets[model]))
+        print('- Torch Ops: {}'.format(torch_op_sets[model]))
+        print('\n')

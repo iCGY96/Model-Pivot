@@ -70,7 +70,7 @@ class Mixed_5b(nn.Module):
         )
 
         self.branch3 = nn.Sequential(
-            nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
+            nn.AvgPool2d(3, stride=1, padding=1),
             BasicConv2d(192, 64, kernel_size=1, stride=1)
         )
 
@@ -301,7 +301,7 @@ class InceptionResNetV2(nn.Module):
         )
         self.block8 = Block8(noReLU=True)
         self.conv2d_7b = BasicConv2d(2080, 1536, kernel_size=1, stride=1)
-        self.avgpool_1a = nn.AvgPool2d(8, count_include_pad=False)
+        self.avgpool_1a = nn.AvgPool2d(8)
         self.last_linear = nn.Linear(1536, num_classes)
 
     def features(self, input):

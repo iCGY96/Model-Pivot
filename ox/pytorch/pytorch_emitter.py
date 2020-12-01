@@ -300,7 +300,7 @@ class KitModel(nn.Module):
                 ceil_mode = self.is_ceil_mode(IR_node.get_attr('pads'))
 
                 # input_node = self._defuse_padding(IR_node, exstr)
-                code = "{:<15} = F.{}({}, kernel_size={}, stride={}, padding={}, ceil_mode={}, count_include_pad=False)".format(
+                code = "{:<15} = F.{}({}, kernel_size={}, stride={}, padding={}, ceil_mode={}, count_include_pad=True)".format(
                     IR_node.variable_name,
                     pool_name,
                     self.parent_variable_name(IR_node),
@@ -393,10 +393,14 @@ class KitModel(nn.Module):
                 self.IR_graph.get_node(IR_node.in_edges[0]).real_variable_name,
                 shape_str)
         else:
-            code = "{:<15} = {}.view({})".format(
+            code = "{:<15} = torch.reshape(input = {}, shape = ({}))".format(
                 IR_node.variable_name,
                 self.IR_graph.get_node(IR_node.in_edges[0]).real_variable_name,
                 self.IR_graph.get_node(IR_node.in_edges[1]).real_variable_name,)
+            # code = "{:<15} = {}.view({})".format(
+            #     IR_node.variable_name,
+            #     self.IR_graph.get_node(IR_node.in_edges[0]).real_variable_name,
+            #     self.IR_graph.get_node(IR_node.in_edges[1]).real_variable_name,)
         return code
 
 
@@ -520,9 +524,16 @@ class KitModel(nn.Module):
 
 
     def emit_Constant(self, IR_node):
-        if IR_node.get_attr('value'):
+        if IR_node.get_attr('value') is not None:
             value = IR_node.get_attr('value')
             # print(value)
+            full_shape = IR_node.get_attr('full_shape')
+            if full_shape is not None:
+                code = "{:<15} = torch.full({}, {})".format(
+                    IR_node.variable_name,
+                    full_shape,
+                    value)
+                return code
             if not isinstance(value, list):
                 value = [value]
             if len(value) <= 1:
@@ -734,7 +745,6 @@ class KitModel(nn.Module):
                 extra_str += "{}".format(ends[idx])
         
         shrink_mask = IR_node.get_attr('shrink_axis_mask')
-
         if shrink_mask:
             shrink_str = ''
             for i in range(shrink_mask):
@@ -743,12 +753,24 @@ class KitModel(nn.Module):
             # mask = [int(s) for s in bin(shrink_mask)[2:][::-1]]
             # shrink_str = '[' + ','.join(':' if bit==0 else '0' for bit in mask) + ']'
         else:
-            shrink_str = ''
-        code = "{:<15} = {}[{}]".format(
-            IR_node.variable_name,
-            self.parent_variable_name(IR_node),
-            shrink_str
-        )
+            shrink_str = extra_str
+
+        input_from_param = IR_node.get_attr('input_from_param')
+        if input_from_param is not None:
+            self.add_init(2, "self.{:<15} = torch.from_numpy(__weights_dict['{}']['{}'])".format(
+                self.parent_variable_name(IR_node),
+                IR_node.name,
+                input_from_param
+                ))
+            code = "{:<15} = {}[{}]".format(
+                IR_node.variable_name,
+                "self." + self.parent_variable_name(IR_node),
+                shrink_str)
+        else:
+            code = "{:<15} = {}[{}]".format(
+                IR_node.variable_name,
+                self.parent_variable_name(IR_node),
+                shrink_str)
         return code
 
 
@@ -809,9 +831,24 @@ class KitModel(nn.Module):
                 self.parent_variable_name(IR_node),
                 self.parent_variable_name(IR_node, [1]))
         else:
-            code = "{:<15} = {}.transpose(1, 2).contiguous()".format(
-                IR_node.variable_name,
-                self.parent_variable_name(IR_node))
+            perm = IR_node.get_attr('perm_list')
+            if perm is None:
+                perm = IR_node.get_attr('perm')
+                if perm is None:
+                    code = "{:<15} = {}.transpose(1, 2).contiguous()".format(
+                        IR_node.variable_name,
+                        self.parent_variable_name(IR_node))
+                else:
+                    code = "{:<15} = {}.permute{}.contiguous()".format(
+                        IR_node.variable_name,
+                        self.parent_variable_name(IR_node),
+                        str(tuple(perm)))
+            else:
+                code = "{:<15} = {}.transpose{}.contiguous()".format(
+                    IR_node.variable_name,
+                    self.parent_variable_name(IR_node),
+                    str(tuple(perm)))
+            # print(perm)
         return code
 
 

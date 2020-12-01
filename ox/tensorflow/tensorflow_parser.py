@@ -412,6 +412,7 @@ class TensorflowParser(Parser):
 
 
     def gen_IR(self):
+        node_set = set()
         for layer in self.src_graph.topological_sort:
             current_node = self.src_graph.get_node(layer)
 
@@ -421,6 +422,8 @@ class TensorflowParser(Parser):
 
             node_type = current_node.type
 
+            node_set.add(node_type)
+
             if hasattr(self, "rename_" + node_type):
                 # print("rename_" + node_type)
                 func = getattr(self, "rename_" + node_type)
@@ -429,6 +432,7 @@ class TensorflowParser(Parser):
                 # print('***Unknown:', current_node.type)
                 self.rename_UNKNOWN(current_node)
 
+        return list(node_set)
 
     @staticmethod
     def _copy_and_reop(source_node, IR_node, new_op = None):

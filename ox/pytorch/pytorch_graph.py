@@ -11,11 +11,19 @@ import torch.serialization
 import contextlib
 from torch.jit import _unique_state_dict
 import numpy as np
+import re
 
+DYNAMIC_SHAPE_MARK = "Dynamic"
 
 class PytorchGraphNode(GraphNode):
 
-    def __init__(self, layer):
+
+    def __init__(self, *args):
+        if len(args) != 1:
+            self.consturct_from_fields(args)
+            return
+
+        layer = args[0]
         self._name = layer.scopeName()
         self._kind = layer.kind()
         import re
@@ -50,6 +58,15 @@ class PytorchGraphNode(GraphNode):
             re.findall(r'\[([\w\d.]+)\]', self._name)
         )
 
+    def consturct_from_fields(self, args):
+        self._name = args[0]
+        self._kind = args[1]
+        self.id = args[2]
+        super(PytorchGraphNode, self).__init__(layer=None)
+        self.attrs = args[3] if len(args) >= 4 else {}
+        self.weights_name = '.'.join(
+            re.findall(r'\[([\w\d.]+)\]', self._name)
+        )
 
     @property
     def name(self):
@@ -68,8 +85,8 @@ class PytorchGraphNode(GraphNode):
     def pytorch_layer(self):
         return self.layer
 
-
-
+    def __str__(self):
+        return "PytorchGraphNode name: %s, type: %s, attrs: %s" % (self.name, self.type, str(self.attrs))
 
 class PytorchGraph(Graph):
 
@@ -105,7 +122,6 @@ class PytorchGraph(Graph):
 
     @staticmethod
     def get_node_id(node):
-        import re
         node_id = re.search(r"[\d]+", node.__str__())
         return node_id.group(0)
 
@@ -143,6 +159,7 @@ class PytorchGraph(Graph):
             trace, output = torch.jit.get_trace_graph(self.model, (dummy_input, ))
 
         trace.set_graph(PytorchGraph._optimize_graph(trace.graph(), False))
+
         # nodes
         nodes = list(trace.graph().nodes())
 
@@ -172,7 +189,16 @@ class PytorchGraph(Graph):
                     val[i] = float(val[i])
                 output_shape = list(np.array(val).shape)
             else:
-                output_shape = [int(x.replace('!', '')) for x in output_shape_str.split(',')]
+                output_shape = []
+                for x in output_shape_str.split(', '):
+                    x_str = x.replace('!', '')
+                    if x_str.isnumeric():
+                        output_shape.append(int(x_str))
+                    else:
+                        # RNN or other control flow related node has
+                        # Changable output shape so it is undefined
+                        output_shape = DYNAMIC_SHAPE_MARK
+                        break
 
             self.shape_dict[node_name] = output_shape
             self.layer_map[node_name] = PytorchGraphNode(node)
@@ -189,3 +215,19 @@ class PytorchGraph(Graph):
 
 
         super(PytorchGraph, self).build()
+
+    def remove_node(self, node):
+        del self.shape_dict[node.name]
+        del self.layer_map[node.name]
+        del self.layer_name_map[node.name]
+        for in_node_name in node.in_edges:
+            in_node = self.get_node(in_node_name)
+            in_node.out_edges.remove(node.name)
+        for out_node_name in node.out_edges:
+            out_node = self.get_node(out_node_name)
+            out_node.in_edges.remove(node.name)
+        node.in_edges = []
+        node.out_edges = []
+        self.input_layers = []
+        super(PytorchGraph, self).rebuild()
+

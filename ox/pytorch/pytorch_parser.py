@@ -3,6 +3,7 @@
 #  Licensed under the MIT License. See License.txt in the project root for license information.
 #----------------------------------------------------------------------------------------------
 
+import logging
 import os
 import numpy as np
 import ox.common.IR.graph_pb2 as graph_pb2
@@ -10,6 +11,7 @@ from ox.common.IR.graph_pb2 import NodeDef, GraphDef, DataType
 from ox.common.utils import *
 from ox.common.DataStructure.parser import Parser
 from ox.pytorch.pytorch_graph import PytorchGraph
+from ox.pytorch.rewriter.lstm_rewriter import LstmRewriter
 import torch
 import torchvision
 
@@ -28,12 +30,15 @@ class PytorchParser(Parser):
     'onnx::Relu': 'Relu',
     'onnx::Tanh': 'Tanh',
     'onnx::Sigmoid': 'Sigmoid',
+    'onnx::MatMul': 'MatMul',
     'onnx::Mul': 'Mul',
     'onnx::Constant': 'Constant',
     'onnx::Reshape': 'Reshape',
+    'aten::reshape': 'Reshape',
     'onnx::Transpose': 'Transpose',
     'onnx::LogSoftmax': 'LogSoftmax',
     'onnx::Slice': 'Slice',
+    'onnx::Squeeze': 'Squeeze',
     'onnx::ConvTranspose': 'ConvTranspose'
     }
 
@@ -71,27 +76,39 @@ class PytorchParser(Parser):
 
         self.input_shape = tuple([1] + input_shape)
         self.pytorch_graph.build(self.input_shape)        
+
+        lstm_rewriter = LstmRewriter(self.pytorch_graph)
+        self.pytorch_graph = lstm_rewriter.run()
+
         self.state_dict = self.pytorch_graph.state_dict
         self.shape_dict = self.pytorch_graph.shape_dict
 
 
     def gen_IR(self):
-
+        
+        node_set = set()
         for layer in self.src_graph.topological_sort:
             current_node = self.src_graph.get_node(layer)
             onnx_node_type = current_node.type
+            if onnx_node_type not in PytorchParser.layer_map:
+                logger = logging.getLogger()
+                logger.warning("Warning: onnx_node_type '%s' not in PytorchParser.layer_map" % (onnx_node_type))
+                continue
             node_type = PytorchParser.layer_map[onnx_node_type]
+
+            node_set.add(node_type)
 
             if hasattr(self, "rename_" + node_type):
                 # print("rename_" + node_type)
                 func = getattr(self, "rename_" + node_type)
                 func(current_node)
-
             else:
-                self.rename_UNKNOWN(current_node)
-            
+                print('UNKNOWN: ', node_type)
+                self.rename_UNKNOWN(current_node)            
 
         self.gen_Input()
+
+        return list(node_set)
 
 
 
@@ -354,8 +371,12 @@ class PytorchParser(Parser):
         self.set_weight(source_node.name, "var", variance)
 
     def rename_Reshape(self, source_node):
-        # print('Reshape:', source_node.attrs)
+        # print('Reshape:', source_node.attrs, source_node.type)
         IR_node = self._convert_identity_operation(source_node, new_op="Reshape")
+        if "shape" in source_node.attrs:
+            kwargs = dict()
+            kwargs["shape"] = source_node.attrs["shape"]
+            assign_IRnode_values(IR_node, kwargs)
         # if len(IR_node.input) > 1:
         #     parent = self.src_graph.get_parent(source_node.name, [1])
         #     shape_list = parent.attrs
@@ -367,7 +388,16 @@ class PytorchParser(Parser):
     def rename_Transpose(self, source_node):
         # print('Transpose:', source_node.attrs)
         IR_node = self._convert_identity_operation(source_node, new_op="Transpose")
-    
+        if 'perm_list' in source_node.attrs:
+            kwargs = dict()
+            kwargs['perm_list'] = source_node.attrs['perm_list']
+            assign_IRnode_values(IR_node, kwargs)
+        
+        if 'perm' in source_node.attrs:
+            kwargs = dict()
+            kwargs['perm'] = source_node.attrs['perm']
+            assign_IRnode_values(IR_node, kwargs)
+ 
     def rename_Slice(self, source_node):
         # print('Transpose:', source_node.attrs)
         IR_node = self._convert_identity_operation(source_node, new_op="Slice")
@@ -375,6 +405,24 @@ class PytorchParser(Parser):
         kwargs['shrink_axis_mask'] = source_node.attrs['axes'][0]
         kwargs['starts'] = source_node.attrs['starts']
         kwargs['ends'] = source_node.attrs['ends']
+        if 'input_from_param' in source_node.attrs:
+            input_from_param = source_node.attrs['input_from_param']
+            if isinstance(input_from_param, list):
+                concat_numpy = np.array([])
+                concat_name = ""
+                for param_name in input_from_param:
+                    assert isinstance(param_name, str), "set 'input_from_param' as illegal type."
+                    concat_name += ("_" + param_name)
+                    param_numpy = self.state_dict[param_name].numpy()
+                    concat_numpy = np.concatenate((concat_numpy, param_numpy)).astype(param_numpy.dtype)
+                kwargs['input_from_param'] = concat_name
+                self.set_weight(source_node.name, concat_name, concat_numpy)
+            else:
+                param_name = input_from_param
+                assert isinstance(input_from_param, str), "set 'input_from_param' as illegal type."
+                kwargs['input_from_param'] = param_name
+                param_numpy = self.state_dict[param_name].numpy()
+                self.set_weight(source_node.name, param_name, param_numpy)
         assign_IRnode_values(IR_node, kwargs)        
 
     def rename_LogSoftmax(self, source_node):
@@ -409,6 +457,7 @@ class PytorchParser(Parser):
         assign_IRnode_values(IR_node, kwargs)
 
     def rename_Avgpool(self, source_node):
+        # print('Avgpool:', source_node.attrs)
         attr = source_node.attrs
         kwargs = dict()
         kwargs['strides'] = [1] + attr['strides'] + [1]
@@ -474,7 +523,6 @@ class PytorchParser(Parser):
 
     def rename_Concat(self, source_node):
         IR_node = self._convert_identity_operation(source_node, new_op='Concat')
-
         if source_node.attrs['axis'] == 1:
             IR_node.attr['axis'].i = len(self.shape_dict[source_node.name]) - 1
         else:
@@ -513,6 +561,11 @@ class PytorchParser(Parser):
 
         print(IR_node)
 
+    def rename_Squeeze(self, source_node):
+        IR_node = self._convert_identity_operation(source_node, new_op='Squeeze')
+
+    def rename_MatMul(self, source_node):
+        IR_node = self._convert_identity_operation(source_node, new_op='MatMul')
 
     ####################
     # Helper Functions #

@@ -175,7 +175,7 @@ def KitModel(weight_file = None):
             # code = "{:<15} = {}".format(
             #         IR_node.variable_name,
             #         IR_node.get_attr('value'))
-            if not isinstance(IR_node.get_attr('value'), list):
+            if not isinstance(IR_node.get_attr('value'), list) and IR_node.get_attr('value') is not None:
                 code = "{:<15} = {}".format(
                     IR_node.variable_name,
                     IR_node.get_attr('value'))

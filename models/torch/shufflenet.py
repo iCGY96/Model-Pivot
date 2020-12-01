@@ -244,5 +244,7 @@ class ShuffleNet(nn.Module):
 
         return nn.Sequential(*stage)
 
+
+
 def shufflenet():
     return ShuffleNet([4, 8, 4])

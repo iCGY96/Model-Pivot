@@ -75,7 +75,7 @@ def shufflenet(images, is_training, num_classes=1000, depth_multiplier='1.0'):
         x, num_classes, activation_fn=None, scope='classifier',
         weights_initializer=tf.contrib.layers.xavier_initializer()
     )
-    return logits
+    return x
 
 
 def block(x, num_units, out_channels=None, scope='stage'):
@@ -106,7 +106,6 @@ def concat_shuffle_split(x, y):
         x, y = tf.split(z, num_or_size_splits=2, axis=3)
         return x, y
 
-
 def basic_unit(x):
     in_channels = x.shape[3].value
     x = slim.conv2d(x, in_channels, (1, 1), stride=1, scope='conv1x1_before')
@@ -121,11 +120,11 @@ def basic_unit_with_downsampling(x, out_channels=None):
 
     y = slim.conv2d(x, in_channels, (1, 1), stride=1, scope='conv1x1_before')
     y = depthwise_conv(y, kernel=3, stride=2, activation_fn=None, scope='depthwise')
-    y = slim.conv2d(y, out_channels // 2, (1, 1), stride=1, scope='conv1x1_after')
+    y = slim.conv2d(y, out_channels, (1, 1), stride=1, scope='conv1x1_after')
 
     with tf.variable_scope('second_branch'):
         x = depthwise_conv(x, kernel=3, stride=2, activation_fn=None, scope='depthwise')
-        x = slim.conv2d(x, out_channels // 2, (1, 1), stride=1, scope='conv1x1_after')
+        x = slim.conv2d(x, out_channels, (1, 1), stride=1, scope='conv1x1_after')
         return x, y
 
 

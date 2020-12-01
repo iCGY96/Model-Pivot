@@ -63,7 +63,7 @@ def main():
     num_classes = 10
     in_batch, inchannel, in_h, in_w = 4, 3, 28, 28
     x = torch.randn(in_batch, inchannel, in_h, in_w)
-    net = FCN8s(num_classes)
+    net = FCNs(num_classes)
     out = net(x)
     print(out.shape)
 

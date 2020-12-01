@@ -1,5 +1,6 @@
 # open-exchange
 open-exchange is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between PyTorch and Tensorflow.
+IR is based on the National Information Technology Standardization ```Neural Network Representation and Model Compression Part 1: Convolution Neural Network``.
 
 ## Requirments
 - tensorflow==1.8.0
@@ -17,16 +18,15 @@ You can deploy it on Web by running:
 python app.py
 ```
 
+You can also choose to visit the <http://dgx.pkuml.org:6269/> website directly. After uploading the JSON file of IR, you can see the basic information about the model.
+
 ## Model
-Framework | ResNet50 | Inception V3 | ShuffleNet | FCN |
-:----------:|:----------:|:----------:|:----------:|:----------:|
-TensorFlow | √ | √ | √ | √ | 
-PyTorch | √ | √ | √ | √ | 
+Framework | ResNet50 | Inception V3 | ShuffleNet | FCN | LSTM |
+:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
+TensorFlow | √ | √ | √ | √ | √ |
+PyTorch | √ | √ | √ | √ | √ | 
 
 ## Test for Tensorflow and PyTorch
 ```shell
 CUDA_VSIBLE_DEVICES=0 python test.py
 ```
-
-## Acknowledgements
-Thanks to [Microsoft](https://github.com/Microsoft), the initial code of *Tensorflow <-> IR converting* is references to his project [MMdnn](https://github.com/Microsoft/MMdnn).
