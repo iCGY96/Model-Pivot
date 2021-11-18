@@ -1,5 +1,5 @@
-# open-exchange
-open-exchange is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between PyTorch and Tensorflow.
+# Model-Pivot
+Model-Pivot is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between PyTorch and Tensorflow.
 IR is based on the National Information Technology Standardization ```Neural Network Representation and Model Compression Part 1: Convolution Neural Network``.
 
 ## Requirments
@@ -17,8 +17,6 @@ You can deploy it on Web by running:
 ```shell
 python app.py
 ```
-
-You can also choose to visit the <http://dgx.pkuml.org:6269/> website directly. After uploading the JSON file of IR, you can see the basic information about the model.
 
 ## Model
 Framework | ResNet50 | Inception V3 | ShuffleNet | FCN | LSTM |
