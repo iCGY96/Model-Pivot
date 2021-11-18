@@ -1,6 +1,6 @@
-# open-exchange
+# Model-Pivot
 
-open-exchange is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between Keras, MXNet, PyTorch, Caffe and Tensorflow.
+Model-Pivot is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks. Convert models between Keras, MXNet, PyTorch, Caffe and Tensorflow.
 
 ## Requirments
 - tensorflow==1.13.1
