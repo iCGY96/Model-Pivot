@@ -1,10 +1,9 @@
-Welcome to Lumache's documentation!
+Welcome to Model-Pivot's documentation!
 ===================================
 
-**Lumache** (/lu'make/) is a Python library for cooks and food lovers
-that creates recipes mixing random ingredients.
-It pulls data from the `Open Food Facts database <https://world.openfoodfacts.org/>`_
-and offers a *simple* and *intuitive* API.
+**Model-Pivot ** is a model conversion and visualization tool to help users inter-operate among different deep learning frameworks.
+IR is based on the National Information Technology Standardization ```Neural Network Representation and Model Compression Part 1: Convolution Neural Network``.
+
 
 Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
