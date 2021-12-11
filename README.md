@@ -3,7 +3,7 @@ Model-Pivot is a model conversion and visualization tool to help users inter-ope
 IR is based on the National Information Technology Standardization ```Neural Network Representation and Model Compression Part 1: Convolution Neural Network``.
 
 ## Requirments
-<!-- - tensorflow>=2.5.1 -->
+- tensorflow==1.8.0
 - pytorch==0.4.0
 - torchvision==0.2.0
 - protobuf>=3.6.1
