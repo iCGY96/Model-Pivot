@@ -16,6 +16,7 @@ Contents
 --------
 
 .. toctree::
+
    usage
    model
    operators
