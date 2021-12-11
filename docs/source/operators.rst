@@ -1,4 +1,4 @@
-Operators
+IR Operators
 =====
 
 .. _installation:
