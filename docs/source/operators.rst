@@ -1,4 +1,4 @@
-Usage
+Operators
 =====
 
 .. _installation:

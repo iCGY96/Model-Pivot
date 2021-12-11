@@ -17,7 +17,7 @@ Contents
 
 .. toctree::
 
+   :model: IR-Model
+   :operators: IR-Operators
    usage
-   model
-   operators
    examples
